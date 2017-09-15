@@ -1,9 +1,10 @@
 <ion-header>
   <ion-navbar>
     <ion-title>
-      <ion-item>
+      <h2 *ngIf="!state">Welcome</h2>
+      <ion-item *ngIf="state">
         <ion-label>></ion-label>
-        <ion-input type="text" (keypress)="onKeyPress($event)" [(ngModel)]="current"></ion-input>
+        <ion-input type="text" (keyup)="onKeyUp($event)" (keydown)="onKeyDown($event)" (keypress)="onKeyPress($event)" [(ngModel)]="current"></ion-input>
       </ion-item>
     </ion-title>
     <ion-buttons right>

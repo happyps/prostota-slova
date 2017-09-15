@@ -3,6 +3,7 @@ import { NavController } from 'ionic-angular';
 import { FirebaseListObservable, AngularFireDatabase } from 'angularfire2/database';
 import * as firebase from 'firebase/app';
 import { AngularFireAuth } from 'angularfire2/auth';
+import { Subscription } from "rxjs/Subscription";
 
 @Component({
   selector: 'page-home',
@@ -12,18 +13,30 @@ export class HomePage {
   items: FirebaseListObservable<any[]>;
   state: firebase.User;
   current: string;
-  
+  chains: FirebaseListObservable<any[]>;
+  currentChain: firebase.database.ThenableReference;
+  chainsPath;
+  currentChainKey;
+  loadSubscription: Subscription;
+
   constructor(
     public navCtrl: NavController,
     public auth: AngularFireAuth,
-    db: AngularFireDatabase) {
+    private db: AngularFireDatabase) {
     this.auth.authState.subscribe(state => {
       console.log('Auth state updated');
       console.log(state);
       this.state = state;
       if (state) {
-        this.items = db.list('/sample');
+        db.object(`/users/${state.uid}`).update({ exist: true });
+        this.chainsPath = `/users/${state.uid}/chains`;
+        this.chains = db.list(this.chainsPath);
+        this.loadSubscription = this.chains.subscribe(e => {
+          this.loadSubscription.unsubscribe();
+          this.prevChain()
+        });
       } else {
+        this.chains = null;
         this.items = null;
       }
     });
@@ -55,9 +68,87 @@ export class HomePage {
       this.items.remove(item);
     }
   }
+  createChain() {
+    console.log('createChain');
+    this.currentChain = this.chains.push({ test: true });
+    console.log(this.currentChain);
+    this.currentChainKey = this.currentChain.key;
+    console.log(this.currentChainKey);
+    this.updateChain();
+  }
+  updateChain() {
+    console.log('updateChain');
+    this.items = this.db.list(`${this.chainsPath}/${this.currentChainKey}/words'`);
+  }
+  nextChain() {
+    console.log('nextChain');
+
+    this.chains.subscribe(a => {
+      let nextKey = null;
+      let stop = false;
+      let lastKey = null;
+      a.forEach(next => {
+        lastKey = next.$key;
+        if (!nextKey && stop) {
+          nextKey = lastKey;
+        }
+        if (this.currentChainKey && next.$key == this.currentChainKey) {
+          stop = true;
+        }
+      });
+      this.currentChainKey = nextKey ? nextKey : lastKey;
+      this.updateChain();
+
+    });
+  }
+  prevChain() {
+    console.log('prevChain');
+    let prevKey = null;
+    let stop = false;
+
+    this.chains.subscribe(a => {
+      a.forEach(next => {
+        console.log(next);
+        if (this.currentChainKey && next.$key == this.currentChainKey) {
+          stop = true;
+        } else if (!stop) {
+          prevKey = next.$key;
+        }
+      });
+      this.currentChainKey = prevKey;
+      this.updateChain();
+    });
+  }
+  onKeyDown(event) {
+    console.log('onKeyDown');
+    console.log(event);
+  }
+  onKeyUp(event) {
+    console.log('onKeyUp');
+    console.log(event);
+    switch (event.keyCode) {
+      case 40: {
+        if (event.altKey) {
+          this.prevChain();
+        }
+        break;
+      }
+      case 38: {
+        if (event.altKey) {
+          this.nextChain();
+        }
+        break;
+      }
+    }
+    // UP 38
+    // DOWN 40
+  }
   onKeyPress(event) {
-    if (event.keyCode === 13 && this.current && this.current.length) {
-      if (this.current.indexOf('-') === 0) {
+    console.log(event);
+    if (event.keyCode === 13) {
+      if (!this.current || !this.current.length) {
+        this.createChain();
+      } else if (this.current.indexOf('-') === 0) {
         this.removeWord(this.current.substr(1));
       } else {
         this.addWord(this.current);
@@ -66,5 +157,5 @@ export class HomePage {
     }
   }
 
-// test commit
+  // test commit
 }
