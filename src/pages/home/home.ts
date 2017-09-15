@@ -53,6 +53,9 @@ export class HomePage {
     this.state = null;
   }
   addWord(word) {
+    if (!this.items) {
+      this.createChain();
+    }
     this.items.push(word);
   }
   removeWord(word) {
@@ -78,7 +81,7 @@ export class HomePage {
   }
   updateChain() {
     console.log('updateChain');
-    this.items = this.db.list(`${this.chainsPath}/${this.currentChainKey}/words'`);
+    this.items = this.db.list(`${this.chainsPath}/${this.currentChainKey}/words`);
   }
   selectChain() {
     this.currentChainKey = this.secondChainKey;
@@ -86,7 +89,7 @@ export class HomePage {
   }
   updateSecondChain() {
     console.log('updateSecondChain');
-    this.secondItems = this.db.list(`${this.chainsPath}/${this.secondChainKey}/words'`);
+    this.secondItems = this.db.list(`${this.chainsPath}/${this.secondChainKey}/words`);
   }
   nextChain() {
     console.log('nextChain');
