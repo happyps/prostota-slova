@@ -11,12 +11,14 @@ import { Subscription } from "rxjs/Subscription";
 })
 export class HomePage {
   items: FirebaseListObservable<any[]>;
+  secondItems: FirebaseListObservable<any[]>;
   state: firebase.User;
   current: string;
   chains: FirebaseListObservable<any[]>;
-  currentChain: firebase.database.ThenableReference;
-  chainsPath;
+  //currentChain: firebase.database.ThenableReference;
   currentChainKey;
+  secondChainKey;
+  chainsPath;
   loadSubscription: Subscription;
 
   constructor(
@@ -70,15 +72,21 @@ export class HomePage {
   }
   createChain() {
     console.log('createChain');
-    this.currentChain = this.chains.push({ test: true });
-    console.log(this.currentChain);
-    this.currentChainKey = this.currentChain.key;
+    this.currentChainKey = this.chains.push({ test: true }).key;
     console.log(this.currentChainKey);
     this.updateChain();
   }
   updateChain() {
     console.log('updateChain');
     this.items = this.db.list(`${this.chainsPath}/${this.currentChainKey}/words'`);
+  }
+  selectChain() {
+    this.currentChainKey = this.secondChainKey;
+    this.updateChain();
+  }
+  updateSecondChain() {
+    console.log('updateSecondChain');
+    this.secondItems = this.db.list(`${this.chainsPath}/${this.secondChainKey}/words'`);
   }
   nextChain() {
     console.log('nextChain');
@@ -92,12 +100,12 @@ export class HomePage {
         if (!nextKey && stop) {
           nextKey = lastKey;
         }
-        if (this.currentChainKey && next.$key == this.currentChainKey) {
+        if (this.secondChainKey && next.$key == this.secondChainKey) {
           stop = true;
         }
       });
-      this.currentChainKey = nextKey ? nextKey : lastKey;
-      this.updateChain();
+      this.secondChainKey = nextKey ? nextKey : lastKey;
+      this.updateSecondChain();
 
     });
   }
@@ -109,14 +117,14 @@ export class HomePage {
     this.chains.subscribe(a => {
       a.forEach(next => {
         console.log(next);
-        if (this.currentChainKey && next.$key == this.currentChainKey) {
+        if (this.secondChainKey && next.$key == this.secondChainKey) {
           stop = true;
         } else if (!stop) {
           prevKey = next.$key;
         }
       });
-      this.currentChainKey = prevKey;
-      this.updateChain();
+      this.secondChainKey = prevKey;
+      this.updateSecondChain();
     });
   }
   onKeyDown(event) {
@@ -139,9 +147,16 @@ export class HomePage {
         }
         break;
       }
+      case 220: {
+        if (event.altKey) {
+          this.selectChain();
+        }
+        break;
+      }
     }
     // UP 38
     // DOWN 40
+    // \ 220
   }
   onKeyPress(event) {
     console.log(event);
