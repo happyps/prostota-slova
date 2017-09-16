@@ -3,6 +3,7 @@ import { NavController } from 'ionic-angular';
 import { FirebaseListObservable, AngularFireDatabase } from 'angularfire2/database';
 import * as firebase from 'firebase/app';
 import { AngularFireAuth } from 'angularfire2/auth';
+import 'rxjs/add/operator/take';
 
 @Component({
   selector: 'page-home',
@@ -31,8 +32,7 @@ export class HomePage {
         db.object(`/users/${state.uid}`).update({ exist: true });
         this.chainsPath = `/users/${state.uid}/chains`;
         this.chains = db.list(this.chainsPath);
-        const subscription = this.chains.subscribe(e => {
-          subscription.unsubscribe();
+        this.chains.take(1).subscribe(e => {
           this.prevChain()
         });
       } else {
@@ -92,8 +92,7 @@ export class HomePage {
   nextChain() {
     console.log('nextChain');
 
-    const subscription = this.chains.subscribe(a => {
-      subscription.unsubscribe();
+    this.chains.take(1).subscribe(a => {
       let nextKey = null;
       let stop = false;
       let lastKey = null;
@@ -117,8 +116,7 @@ export class HomePage {
 
 
 
-    const subscription = this.chains.subscribe(a => {
-      subscription.unsubscribe();
+    this.chains.take(1).subscribe(a => {
       let prevKey = null;
       let stop = false;
       a.forEach(next => {
