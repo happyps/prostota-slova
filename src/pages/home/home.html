@@ -9,6 +9,9 @@
     </ion-title>
     <ion-buttons right>
       <button ion-button icon-only *ngIf="!state" (click)="login()"><ion-icon name="key"></ion-icon></button>
+      <button ion-button icon-only *ngIf="state" (click)="selectChain()"><ion-icon name="arrow-round-back"></ion-icon></button>
+      <button ion-button icon-only *ngIf="state" (click)="nextChain()"><ion-icon name="arrow-round-up"></ion-icon></button>
+      <button ion-button icon-only *ngIf="state" (click)="prevChain()"><ion-icon name="arrow-round-down"></ion-icon></button>
       <button ion-button icon-only *ngIf="state" (click)="logout()"><ion-icon name="exit"></ion-icon></button>
     </ion-buttons>
   </ion-navbar>

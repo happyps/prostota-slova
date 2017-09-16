@@ -3,7 +3,6 @@ import { NavController } from 'ionic-angular';
 import { FirebaseListObservable, AngularFireDatabase } from 'angularfire2/database';
 import * as firebase from 'firebase/app';
 import { AngularFireAuth } from 'angularfire2/auth';
-import { Subscription } from "rxjs/Subscription";
 
 @Component({
   selector: 'page-home',
@@ -19,7 +18,6 @@ export class HomePage {
   currentChainKey;
   secondChainKey;
   chainsPath;
-  loadSubscription: Subscription;
 
   constructor(
     public navCtrl: NavController,
@@ -33,8 +31,8 @@ export class HomePage {
         db.object(`/users/${state.uid}`).update({ exist: true });
         this.chainsPath = `/users/${state.uid}/chains`;
         this.chains = db.list(this.chainsPath);
-        this.loadSubscription = this.chains.subscribe(e => {
-          this.loadSubscription.unsubscribe();
+        const subscription = this.chains.subscribe(e => {
+          subscription.unsubscribe();
           this.prevChain()
         });
       } else {
@@ -94,11 +92,13 @@ export class HomePage {
   nextChain() {
     console.log('nextChain');
 
-    this.chains.subscribe(a => {
+    const subscription = this.chains.subscribe(a => {
+      subscription.unsubscribe();
       let nextKey = null;
       let stop = false;
       let lastKey = null;
       a.forEach(next => {
+        console.log(next);
         lastKey = next.$key;
         if (!nextKey && stop) {
           nextKey = lastKey;
@@ -114,10 +114,13 @@ export class HomePage {
   }
   prevChain() {
     console.log('prevChain');
-    let prevKey = null;
-    let stop = false;
 
-    this.chains.subscribe(a => {
+
+
+    const subscription = this.chains.subscribe(a => {
+      subscription.unsubscribe();
+      let prevKey = null;
+      let stop = false;
       a.forEach(next => {
         console.log(next);
         if (this.secondChainKey && next.$key == this.secondChainKey) {
@@ -126,8 +129,10 @@ export class HomePage {
           prevKey = next.$key;
         }
       });
-      this.secondChainKey = prevKey;
-      this.updateSecondChain();
+      if (prevKey) {
+        this.secondChainKey = prevKey;
+        this.updateSecondChain();
+      };
     });
   }
   onKeyDown(event) {
