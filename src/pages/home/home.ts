@@ -22,6 +22,7 @@ export class HomePage {
   chains: FirebaseListObservable<any[]>;
   currentChainKey;
   secondChainKey;
+  normalViewChainKey;
   chainsPath;
   searchChainKeyList: string[];
 
@@ -118,8 +119,14 @@ export class HomePage {
       this.secondLocalItems = v.slice(0).reverse();
     });
   }
+  normalView() {
+    this.secondChainKey = this.normalViewChainKey;
+    this.normalViewChainKey = null;
+    this.updateSecondChain();
+  }
   search() {
     console.log('search');
+    this.normalViewChainKey = this.secondChainKey;
     const chainMap = new Map<string, number>();
     const wordsCount = this.localItems.length;
     let checkedWords = 0;
@@ -127,97 +134,81 @@ export class HomePage {
       console.log(element);
       const path = `/users/${this.state.uid}/words/${element.$value}`;
       this.db.list(path).take(1).subscribe(a => {
-        a.forEach(e => {
-          const chainKey = e.$key;
-          if (chainKey !== this.currentChainKey) {
-            if (!chainMap.has(chainKey)) {
-              chainMap.set(chainKey, 1);
-            } else {
-              chainMap.set(chainKey, chainMap.get(chainKey) + 1);
+        if (this.normalViewChainKey) {
+          a.forEach(e => {
+            const chainKey = e.$key;
+            if (chainKey !== this.currentChainKey) {
+              if (!chainMap.has(chainKey)) {
+                chainMap.set(chainKey, 1);
+              } else {
+                chainMap.set(chainKey, chainMap.get(chainKey) + 1);
+              }
             }
-          }
-        });
-        checkedWords++;
-        if (checkedWords == wordsCount) {
-          let items = Array.from(chainMap.keys()).map(key => {
-            return { chainKey: key, chainCounter: chainMap.get(key) }
           });
-          items.sort((first, second) => second.chainCounter - first.chainCounter);
-          this.searchChainKeyList = items.map(item => item.chainKey);
-          this.secondChainKey = null;
-          this.prevChain();
-          // let maxCounter = 0;
-          // let match = null;
-          // chainMap.forEach((chainCounter, chainKey) => {
-          //   if (chainCounter > maxCounter) {
-          //     match = chainKey;
-          //   }
-          // });
-          // if (match) {
-          //   this.secondChainKey = match;
-          //   this.updateSecondChain();
-          // }
+          checkedWords++;
+          if (checkedWords == wordsCount) {
+            let items = Array.from(chainMap.keys()).map(key => {
+              return { chainKey: key, chainCounter: chainMap.get(key) }
+            });
+            items.sort((first, second) => second.chainCounter - first.chainCounter);
+            this.searchChainKeyList = items.map(item => item.chainKey);
+            this.secondChainKey = null;
+            this.prevChain();
+          }
         }
       })
     });
   }
+  switch2NextChain(a) {
+    let nextKey = null;
+    let stop = false;
+    let lastKey = null;
+    a.forEach(next => {
+      console.log(next);
+      lastKey = next;
+      if (!nextKey && stop) {
+        nextKey = lastKey;
+      }
+      if (this.secondChainKey && next == this.secondChainKey) {
+        stop = true;
+      }
+    });
+    this.secondChainKey = nextKey ? nextKey : lastKey;
+    this.updateSecondChain();
+
+  }
   nextChain() {
     console.log('nextChain');
-
-    this.chains.take(1).subscribe(a => {
-      let nextKey = null;
-      let stop = false;
-      let lastKey = null;
-      a.forEach(next => {
-        console.log(next);
-        lastKey = next.$key;
-        if (!nextKey && stop) {
-          nextKey = lastKey;
-        }
-        if (this.secondChainKey && next.$key == this.secondChainKey) {
-          stop = true;
-        }
-      });
-      this.secondChainKey = nextKey ? nextKey : lastKey;
-      this.updateSecondChain();
-
+    if (this.searchChainKeyList) {
+      this.switch2NextChain(this.searchChainKeyList);
+    } else {
+      this.chains.take(1).subscribe(a => this.switch2NextChain(a.map(v => v.$key)));
+    }
+  }
+  switch2PrevChain(a) {
+    let prevKey = null;
+    let stop = false;
+    a.forEach(next => {
+      console.log(next);
+      if (this.secondChainKey && next == this.secondChainKey) {
+        stop = true;
+      } else if (!stop) {
+        prevKey = next;
+      }
     });
+    if (prevKey) {
+      this.secondChainKey = prevKey;
+      this.updateSecondChain();
+    };
   }
   prevChain() {
     console.log('prevChain');
 
 
     if (this.searchChainKeyList) {
-      let prevKey = null;
-      this.searchChainKeyList.forEach(chainKey => {
-        if (!prevKey) {
-          prevKey = chainKey;
-        }
-        if (this.secondChainKey === chainKey) {
-          prevKey = null;
-        }
-      })
-      if (prevKey) {
-        this.secondChainKey = prevKey;
-        this.updateSecondChain();
-      }
+      this.switch2PrevChain(this.searchChainKeyList);
     } else {
-      this.chains.take(1).subscribe(a => {
-        let prevKey = null;
-        let stop = false;
-        a.forEach(next => {
-          console.log(next);
-          if (this.secondChainKey && next.$key == this.secondChainKey) {
-            stop = true;
-          } else if (!stop) {
-            prevKey = next.$key;
-          }
-        });
-        if (prevKey) {
-          this.secondChainKey = prevKey;
-          this.updateSecondChain();
-        };
-      });
+      this.chains.take(1).subscribe(a => this.switch2PrevChain(a.map(v => v.$key)));
     }
 
   }
@@ -253,11 +244,18 @@ export class HomePage {
         }
         break;
       }
+      case 90: { // z
+        if (event.altKey) {
+          this.normalView();
+        }
+        break;
+      }
     }
     // UP 38
     // DOWN 40
     // \ 220
     // q 81
+    // z 90
   }
   onKeyPress(event) {
     console.log(event);
@@ -275,7 +273,7 @@ export class HomePage {
 
   dragItem;
   drag(event, item) {
-    
+
     console.log(event);
     console.log(item);
     this.dragItem = item;
