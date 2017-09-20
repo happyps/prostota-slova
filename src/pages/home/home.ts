@@ -1,3 +1,4 @@
+import { Subscription } from 'rxjs/Subscription';
 import { Component } from '@angular/core';
 import { NavController } from 'ionic-angular';
 import { FirebaseListObservable, AngularFireDatabase } from 'angularfire2/database';
@@ -11,14 +12,18 @@ import 'rxjs/add/operator/take';
 })
 export class HomePage {
   items: FirebaseListObservable<any[]>;
+  localItems: any[];
+  localItemsSubscription: Subscription;
   secondItems: FirebaseListObservable<any[]>;
+  secondLocalItems;
+  secondLocalItemsSubscription: Subscription;
   state: firebase.User;
   current: string;
   chains: FirebaseListObservable<any[]>;
-  //currentChain: firebase.database.ThenableReference;
   currentChainKey;
   secondChainKey;
   chainsPath;
+  searchChainKeyList: string[];
 
   constructor(
     public navCtrl: NavController,
@@ -38,6 +43,14 @@ export class HomePage {
       } else {
         this.chains = null;
         this.items = null;
+        if (this.localItemsSubscription) {
+          this.localItemsSubscription.unsubscribe();
+          this.localItemsSubscription = null;
+        }
+        if (this.secondLocalItemsSubscription) {
+          this.secondLocalItemsSubscription.unsubscribe();
+          this.secondLocalItemsSubscription = null;
+        }
       }
     });
   }
@@ -55,6 +68,7 @@ export class HomePage {
       this.createChain();
     }
     this.items.push(word);
+    this.db.object(`/users/${this.state.uid}/words/${word}/${this.currentChainKey}`).set({ counter: 1 });
   }
   removeWord(word) {
     console.log(`remove ${word}`);
@@ -79,7 +93,12 @@ export class HomePage {
   }
   updateChain() {
     console.log('updateChain');
-    this.items = this.db.list(`${this.chainsPath}/${this.currentChainKey}/words`);
+    let path = `${this.chainsPath}/${this.currentChainKey}/words`;
+    this.items = this.db.list(path);
+    this.localItemsSubscription = this.items.subscribe(v => {
+      this.localItems = v.slice(0).reverse();
+    });
+
   }
   selectChain() {
     this.currentChainKey = this.secondChainKey;
@@ -87,7 +106,54 @@ export class HomePage {
   }
   updateSecondChain() {
     console.log('updateSecondChain');
-    this.secondItems = this.db.list(`${this.chainsPath}/${this.secondChainKey}/words`);
+    const path = `${this.chainsPath}/${this.secondChainKey}/words`;
+    this.secondItems = this.db.list(path);
+    this.secondLocalItemsSubscription = this.secondItems.subscribe(v => {
+      this.secondLocalItems = v.slice(0).reverse();
+    });
+  }
+  search() {
+    console.log('search');
+    const chainMap = new Map<string, number>();
+    const wordsCount = this.localItems.length;
+    let checkedWords = 0;
+    this.localItems.forEach(element => {
+      console.log(element);
+      const path = `/users/${this.state.uid}/words/${element.$value}`;
+      this.db.list(path).take(1).subscribe(a => {
+        a.forEach(e => {
+          const chainKey = e.$key;
+          if (chainKey !== this.currentChainKey) {
+            if (!chainMap.has(chainKey)) {
+              chainMap.set(chainKey, 1);
+            } else {
+              chainMap.set(chainKey, chainMap.get(chainKey) + 1);
+            }
+          }
+        });
+        checkedWords++;
+        if (checkedWords == wordsCount) {
+          let items = Array.from(chainMap.keys()).map(key => {
+            return { chainKey: key, chainCounter: chainMap.get(key) }
+          });
+          items.sort((first, second) => second.chainCounter - first.chainCounter);
+          this.searchChainKeyList = items.map(item => item.chainKey);
+          this.secondChainKey = null;
+          this.prevChain();
+          // let maxCounter = 0;
+          // let match = null;
+          // chainMap.forEach((chainCounter, chainKey) => {
+          //   if (chainCounter > maxCounter) {
+          //     match = chainKey;
+          //   }
+          // });
+          // if (match) {
+          //   this.secondChainKey = match;
+          //   this.updateSecondChain();
+          // }
+        }
+      })
+    });
   }
   nextChain() {
     console.log('nextChain');
@@ -115,23 +181,39 @@ export class HomePage {
     console.log('prevChain');
 
 
-
-    this.chains.take(1).subscribe(a => {
+    if (this.searchChainKeyList) {
       let prevKey = null;
-      let stop = false;
-      a.forEach(next => {
-        console.log(next);
-        if (this.secondChainKey && next.$key == this.secondChainKey) {
-          stop = true;
-        } else if (!stop) {
-          prevKey = next.$key;
+      this.searchChainKeyList.forEach(chainKey => {
+        if (!prevKey) {
+          prevKey = chainKey;
         }
-      });
+        if (this.secondChainKey === chainKey) {
+          prevKey = null;
+        }
+      })
       if (prevKey) {
         this.secondChainKey = prevKey;
         this.updateSecondChain();
-      };
-    });
+      }
+    } else {
+      this.chains.take(1).subscribe(a => {
+        let prevKey = null;
+        let stop = false;
+        a.forEach(next => {
+          console.log(next);
+          if (this.secondChainKey && next.$key == this.secondChainKey) {
+            stop = true;
+          } else if (!stop) {
+            prevKey = next.$key;
+          }
+        });
+        if (prevKey) {
+          this.secondChainKey = prevKey;
+          this.updateSecondChain();
+        };
+      });
+    }
+
   }
   onKeyDown(event) {
     console.log('onKeyDown');
@@ -159,10 +241,17 @@ export class HomePage {
         }
         break;
       }
+      case 81: { // q
+        if (event.altKey) {
+          this.search();
+        }
+        break;
+      }
     }
     // UP 38
     // DOWN 40
     // \ 220
+    // q 81
   }
   onKeyPress(event) {
     console.log(event);
