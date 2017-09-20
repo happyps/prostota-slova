@@ -178,5 +178,19 @@ export class HomePage {
     }
   }
 
-  // test commit
+  dragItem;
+  drag(event, item) {
+    
+    console.log(event);
+    console.log(item);
+    this.dragItem = item;
+  }
+  allowDrop(event) {
+    console.log('allowDrop');
+    event.preventDefault();
+  }
+  drop(event) {
+    console.log('drop');
+    this.addWord(this.dragItem.$value);
+  }
 }

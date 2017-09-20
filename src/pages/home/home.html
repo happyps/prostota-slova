@@ -19,7 +19,7 @@
 
 <ion-content padding>
 <ion-split-pane>
-  <ion-content>
+  <ion-content (drop)="drop($event)" (dragover)="allowDrop($event)">
     <ion-list>
       <ion-item class="text" *ngFor="let item of items | async">
         {{item.$value}}
@@ -28,7 +28,7 @@
   </ion-content>
   <ion-content>
     <ion-list>
-      <ion-item class="text" *ngFor="let item of secondItems | async">
+      <ion-item class="text" *ngFor="let item of secondItems | async" draggable="true" (dragstart)="drag($event, item)">
         {{item.$value}}
       </ion-item>
     </ion-list>
