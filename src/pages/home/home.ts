@@ -95,6 +95,9 @@ export class HomePage {
     console.log('updateChain');
     let path = `${this.chainsPath}/${this.currentChainKey}/words`;
     this.items = this.db.list(path);
+    if (this.localItemsSubscription) {
+      this.localItemsSubscription.unsubscribe();
+    }
     this.localItemsSubscription = this.items.subscribe(v => {
       this.localItems = v.slice(0).reverse();
     });
@@ -108,6 +111,9 @@ export class HomePage {
     console.log('updateSecondChain');
     const path = `${this.chainsPath}/${this.secondChainKey}/words`;
     this.secondItems = this.db.list(path);
+    if (this.secondLocalItemsSubscription) {
+      this.secondLocalItemsSubscription.unsubscribe();
+    }
     this.secondLocalItemsSubscription = this.secondItems.subscribe(v => {
       this.secondLocalItems = v.slice(0).reverse();
     });
