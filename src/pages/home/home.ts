@@ -68,8 +68,8 @@ export class HomePage {
     if (!this.items) {
       this.createChain();
     }
-    this.items.push(word);
-    this.db.object(`/users/${this.state.uid}/words/${word}/${this.currentChainKey}`).set({ counter: 1 });
+    const key = this.items.push({ word: word, timestamp: new Date().toISOString() }).key;
+    this.db.list(`/users/${this.state.uid}/words/${word}/${this.currentChainKey}`).push(key);
   }
   removeWord(word) {
     console.log(`remove ${word}`);
@@ -284,6 +284,6 @@ export class HomePage {
   }
   drop(event) {
     console.log('drop');
-    this.addWord(this.dragItem.$value);
+    this.addWord(this.dragItem.word);
   }
 }
