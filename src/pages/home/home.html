@@ -9,29 +9,38 @@
     </ion-title>
     <ion-buttons right>
       <button ion-button icon-only *ngIf="!state" (click)="login()"><ion-icon name="key"></ion-icon></button>
-      <button ion-button icon-only *ngIf="state" (click)="selectChain()"><ion-icon name="arrow-round-back"></ion-icon></button>
-      <button ion-button icon-only *ngIf="state" (click)="nextChain()"><ion-icon name="arrow-round-up"></ion-icon></button>
-      <button ion-button icon-only *ngIf="state" (click)="prevChain()"><ion-icon name="arrow-round-down"></ion-icon></button>
-      <button ion-button icon-only *ngIf="state" (click)="logout()"><ion-icon name="exit"></ion-icon></button>
     </ion-buttons>
   </ion-navbar>
 </ion-header>
 
 <ion-content padding>
-<ion-split-pane>
-  <ion-content>
-    <ion-list>
-      <ion-item class="text" *ngFor="let item of localItems" (swipe)="swipeFirst($event, item)">
-        {{item.word}}
-      </ion-item>
-    </ion-list>
-  </ion-content>
-  <ion-content>
-    <ion-list>
-      <ion-item class="text" *ngFor="let item of secondLocalItems" (swipe)="swipeSecond($event, item)">
-        {{item.word}}
-      </ion-item>
-    </ion-list>
-  </ion-content>
-</ion-split-pane>
+  <ion-fab *ngIf="state" top right edge>
+    <button ion-fab mini><ion-icon name="add"></ion-icon></button>
+    <ion-fab-list>
+      <button ion-fab (click)="normalView()"><ion-icon name="code"></ion-icon></button>
+      <button ion-fab (click)="search()"><ion-icon name="search"></ion-icon></button>
+      <button ion-fab (click)="logout()"><ion-icon name="exit"></ion-icon></button>
+    </ion-fab-list>
+    <ion-fab-list side="left">
+      <button ion-fab (click)="nextChain()"><ion-icon name="arrow-round-up"></ion-icon></button>
+      <button ion-fab (click)="prevChain()"><ion-icon name="arrow-round-down"></ion-icon></button>
+      <button ion-fab (click)="selectChain()"><ion-icon name="arrow-round-back"></ion-icon></button>
+    </ion-fab-list>
+  </ion-fab>
+  <ion-split-pane>
+    <ion-content>
+      <ion-list>
+        <ion-item class="text" *ngFor="let item of localItems" (swipe)="swipeFirst($event, item)">
+          {{item.word}}
+        </ion-item>
+      </ion-list>
+    </ion-content>
+    <ion-content>
+      <ion-list>
+        <ion-item class="text" *ngFor="let item of secondLocalItems" (swipe)="swipeSecond($event, item)">
+          {{item.word}}
+        </ion-item>
+      </ion-list>
+    </ion-content>
+  </ion-split-pane>
 </ion-content>
