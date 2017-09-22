@@ -39,8 +39,13 @@ export class HomePage {
         db.object(`/users/${state.uid}`).update({ timestamp: new Date().toISOString() });
         this.chainsPath = `/users/${state.uid}/chains`;
         db.database.ref(this.chainsPath).limitToLast(10).once("value").then(res => {
-          console.log(res.val())
-          this.currentChainKeyList = Object.keys(res.val()).slice(0);
+          const result = res.val();
+          console.log(result)
+          if (result) {
+            this.currentChainKeyList = Object.keys(result).slice(0);  
+          } else {
+            this.currentChainKeyList = [];
+          }
           this.prevChain();
         });
       } else {
