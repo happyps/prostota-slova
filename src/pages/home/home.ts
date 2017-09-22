@@ -19,11 +19,11 @@ export class HomePage {
   secondLocalItemsSubscription: Subscription;
   state: firebase.User;
   current: string;
-  chains: FirebaseListObservable<any[]>;
   currentChainKey;
   secondChainKey;
   normalViewChainKey;
   chainsPath;
+  currentChainKeyList: string[];
   searchChainKeyList: string[];
   static readonly SWIPE_LEFT = 2;
 
@@ -36,14 +36,14 @@ export class HomePage {
       console.log(state);
       this.state = state;
       if (state) {
-        db.object(`/users/${state.uid}`).update({ exist: true });
+        db.object(`/users/${state.uid}`).update({ timestamp: new Date().toISOString() });
         this.chainsPath = `/users/${state.uid}/chains`;
-        this.chains = db.list(this.chainsPath);
-        this.chains.take(1).subscribe(e => {
-          this.prevChain()
+        db.database.ref(this.chainsPath).limitToLast(10).once("value").then(res => {
+          console.log(res.val())
+          this.currentChainKeyList = Object.keys(res.val()).slice(0);
+          this.prevChain();
         });
       } else {
-        this.chains = null;
         this.items = null;
         if (this.localItemsSubscription) {
           this.localItemsSubscription.unsubscribe();
@@ -89,7 +89,8 @@ export class HomePage {
   }
   createChain() {
     console.log('createChain');
-    this.currentChainKey = this.chains.push({ test: true }).key;
+    this.currentChainKey = this.db.database.ref(this.chainsPath).push({ timestamp: new Date().toISOString() }).key;
+    this.currentChainKeyList.push(this.currentChainKey);
     console.log(this.currentChainKey);
     this.updateChain();
   }
@@ -103,7 +104,6 @@ export class HomePage {
     this.localItemsSubscription = this.items.subscribe(v => {
       this.localItems = v.slice(0).reverse();
     });
-
   }
   selectChain() {
     this.currentChainKey = this.secondChainKey;
@@ -183,7 +183,7 @@ export class HomePage {
     if (this.searchChainKeyList) {
       this.switch2NextChain(this.searchChainKeyList);
     } else {
-      this.chains.take(1).subscribe(a => this.switch2NextChain(a.map(v => v.$key)));
+      this.switch2NextChain(this.currentChainKeyList);
     }
   }
   switch2PrevChain(a) {
@@ -204,12 +204,10 @@ export class HomePage {
   }
   prevChain() {
     console.log('prevChain');
-
-
     if (this.searchChainKeyList) {
       this.switch2PrevChain(this.searchChainKeyList);
     } else {
-      this.chains.take(1).subscribe(a => this.switch2PrevChain(a.map(v => v.$key)));
+      this.switch2PrevChain(this.currentChainKeyList);
     }
 
   }
