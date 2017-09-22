@@ -133,7 +133,7 @@ export class HomePage {
     let checkedWords = 0;
     this.localItems.forEach(element => {
       console.log(element);
-      const path = `/users/${this.state.uid}/words/${element.$value}`;
+      const path = `/users/${this.state.uid}/words/${element.word}`;
       this.db.list(path).take(1).subscribe(a => {
         if (this.normalViewChainKey) {
           a.forEach(e => {
@@ -151,7 +151,7 @@ export class HomePage {
             let items = Array.from(chainMap.keys()).map(key => {
               return { chainKey: key, chainCounter: chainMap.get(key) }
             });
-            items.sort((first, second) => second.chainCounter - first.chainCounter);
+            items.sort((first, second) => first.chainCounter - second.chainCounter);
             this.searchChainKeyList = items.map(item => item.chainKey);
             this.secondChainKey = null;
             this.prevChain();
