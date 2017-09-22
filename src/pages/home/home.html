@@ -19,16 +19,16 @@
 
 <ion-content padding>
 <ion-split-pane>
-  <ion-content (drop)="drop($event)" (dragover)="allowDrop($event)">
+  <ion-content>
     <ion-list>
-      <ion-item class="text" *ngFor="let item of localItems">
+      <ion-item class="text" *ngFor="let item of localItems" (swipe)="swipeFirst($event, item)">
         {{item.word}}
       </ion-item>
     </ion-list>
   </ion-content>
   <ion-content>
     <ion-list>
-      <ion-item class="text" *ngFor="let item of secondLocalItems" draggable="true" (dragstart)="drag($event, item)">
+      <ion-item class="text" *ngFor="let item of secondLocalItems" (swipe)="swipeSecond($event, item)">
         {{item.word}}
       </ion-item>
     </ion-list>

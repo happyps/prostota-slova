@@ -25,6 +25,7 @@ export class HomePage {
   normalViewChainKey;
   chainsPath;
   searchChainKeyList: string[];
+  static readonly SWIPE_LEFT = 2;
 
   constructor(
     public navCtrl: NavController,
@@ -271,19 +272,14 @@ export class HomePage {
     }
   }
 
-  dragItem;
-  drag(event, item) {
-
+  swipeFirst(event, item) {
+    this.items.remove(item);
+  }
+  swipeSecond(event, item) {
+    console.log('swipe');
     console.log(event);
-    console.log(item);
-    this.dragItem = item;
-  }
-  allowDrop(event) {
-    console.log('allowDrop');
-    event.preventDefault();
-  }
-  drop(event) {
-    console.log('drop');
-    this.addWord(this.dragItem.word);
+    if (event.direction ===  HomePage.SWIPE_LEFT) {
+      this.addWord(item.word);
+    }
   }
 }
