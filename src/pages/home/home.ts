@@ -46,14 +46,14 @@ export class HomePage {
       if (this.state) {
         db.object(`/users/${state.uid}`).update({ timestamp: new Date().toISOString() });
         this.chainsPath = `/users/${state.uid}/chains`;
-        db.database.ref(this.chainsPath).limitToLast(10).once("value").then(res => {
-          const result = res.val();
-          console.log(result)
-          if (result) {
-            this.currentChainKeyList = Object.keys(result).slice(0);  
-          } else {
-            this.currentChainKeyList = [];
-          }
+        db.database.ref(this.chainsPath).orderByChild('selectTimestamp').limitToLast(20).once("value").then(res => {
+          const chainsKeys = [];
+          res.forEach(o => {
+            console.log(o.key);
+            chainsKeys.push(o.key);
+          });
+          console.log(chainsKeys);
+          this.currentChainKeyList = chainsKeys;
           this.prevChain();
         });
       } else {
@@ -135,6 +135,11 @@ export class HomePage {
   updateChain() {
     console.log('updateChain');
     let path = `${this.chainsPath}/${this.currentChainKey}/words`;
+    this.db.database.ref(`${this.chainsPath}/${this.currentChainKey}`).update({ 
+      selectTimestamp: new Date().toISOString() });
+    this.prevChain();
+    this.currentChainKeyList.splice(this.currentChainKeyList.indexOf(this.currentChainKey), 1);
+    this.currentChainKeyList.push(this.currentChainKey);
     this.items = this.db.list(path);
     if (this.localItemsSubscription) {
       this.localItemsSubscription.unsubscribe();
