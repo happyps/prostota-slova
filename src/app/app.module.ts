@@ -1,3 +1,4 @@
+import { EmailPage } from './../pages/email/email';
 import { BrowserModule } from '@angular/platform-browser';
 import { ErrorHandler, NgModule } from '@angular/core';
 import { IonicApp, IonicErrorHandler, IonicModule } from 'ionic-angular';
@@ -25,7 +26,8 @@ export const firebaseConfig = {
 @NgModule({
   declarations: [
     MyApp,
-    HomePage
+    HomePage,
+    EmailPage
   ],
   imports: [
     BrowserModule,
@@ -38,7 +40,8 @@ export const firebaseConfig = {
   bootstrap: [IonicApp],
   entryComponents: [
     MyApp,
-    HomePage
+    HomePage,
+    EmailPage
   ],
   providers: [
     StatusBar,

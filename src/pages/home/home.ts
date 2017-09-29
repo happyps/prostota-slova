@@ -1,6 +1,7 @@
+import { EmailPage } from './../email/email';
 import { Subscription } from 'rxjs/Subscription';
 import { Component } from '@angular/core';
-import { NavController } from 'ionic-angular';
+import { NavController, ActionSheetController, ViewController, App } from 'ionic-angular';
 import { FirebaseListObservable, AngularFireDatabase } from 'angularfire2/database';
 import * as firebase from 'firebase/app';
 import { AngularFireAuth } from 'angularfire2/auth';
@@ -28,14 +29,21 @@ export class HomePage {
   static readonly SWIPE_LEFT = 2;
 
   constructor(
+    public viewCtrl: ViewController,
+    public appCtrl: App,
+    public actionSheetCtrl: ActionSheetController,
     public navCtrl: NavController,
     public auth: AngularFireAuth,
     private db: AngularFireDatabase) {
     this.auth.authState.subscribe(state => {
       console.log('Auth state updated');
       console.log(state);
-      this.state = state;
-      if (state) {
+      if (state && state.emailVerified) {
+        this.state = state;
+      } else {
+        this.state = null;
+      }
+      if (this.state) {
         db.object(`/users/${state.uid}`).update({ timestamp: new Date().toISOString() });
         this.chainsPath = `/users/${state.uid}/chains`;
         db.database.ref(this.chainsPath).limitToLast(10).once("value").then(res => {
@@ -63,7 +71,32 @@ export class HomePage {
   }
   login() {
     console.log('login');
-    this.auth.auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());
+    let actionSheet = this.actionSheetCtrl.create({
+      title: 'Sing up',
+      buttons: [
+        {
+          text: 'Google',
+          handler: () => {
+            console.log('Google');
+            this.auth.auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());
+          }
+        },{
+          text: 'Email',
+          handler: () => {
+            console.log('Email');
+            //this.viewCtrl.dismiss();
+            this.appCtrl.getRootNav().push(EmailPage);
+          }
+        },{
+          text: 'Cancel',
+          role: 'cancel',
+          handler: () => {
+            console.log('Cancel clicked');
+          }
+        }
+      ]
+    });
+    actionSheet.present();
   }
   logout() {
     console.log('logout');
@@ -223,6 +256,9 @@ export class HomePage {
   onKeyUp(event) {
     console.log('onKeyUp');
     console.log(event);
+    if (!this.state) {
+      return;
+    }
     switch (event.keyCode) {
       case 40: {
         if (event.altKey) {
@@ -263,6 +299,9 @@ export class HomePage {
   }
   onKeyPress(event) {
     console.log(event);
+    if (!this.state) {
+      return;
+    }
     if (event.keyCode === 13) {
       if (!this.current || !this.current.length) {
         this.createChain();
@@ -276,11 +315,17 @@ export class HomePage {
   }
 
   swipeFirst(event, item) {
+    if (!this.state) {
+      return;
+    }
     this.items.remove(item);
   }
   swipeSecond(event, item) {
     console.log('swipe');
     console.log(event);
+    if (!this.state) {
+      return;
+    }
     if (event.direction ===  HomePage.SWIPE_LEFT) {
       this.addWord(item.word);
     }
