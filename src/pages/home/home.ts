@@ -137,7 +137,6 @@ export class HomePage {
     let path = `${this.chainsPath}/${this.currentChainKey}/words`;
     this.db.database.ref(`${this.chainsPath}/${this.currentChainKey}`).update({ 
       selectTimestamp: new Date().toISOString() });
-    this.prevChain();
     this.currentChainKeyList.splice(this.currentChainKeyList.indexOf(this.currentChainKey), 1);
     this.currentChainKeyList.push(this.currentChainKey);
     this.items = this.db.list(path);
