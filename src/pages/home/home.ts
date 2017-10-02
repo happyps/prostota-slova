@@ -149,6 +149,7 @@ export class HomePage {
   }
   selectChain() {
     this.currentChainKey = this.secondChainKey;
+    this.prevChain();
     this.updateChain();
   }
   updateSecondChain() {
@@ -276,6 +277,7 @@ export class HomePage {
         }
         break;
       }
+      case 222:
       case 220: {
         if (event.altKey) {
           this.selectChain();
